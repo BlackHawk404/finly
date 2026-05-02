@@ -18,7 +18,28 @@
 /out/
 
 # production
-/build
+/build/icon-*.png
+
+# desktop / mobile build outputs
+/dist/
+*.dmg
+*.apk
+*.ipa
+
+# capacitor / android build artifacts (keep project, ignore generated)
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/app/release/
+/android/local.properties
+/android/.idea/
+/android/*.iml
+
+# ios build artifacts
+/ios/App/build/
+/ios/App/Pods/
+/ios/App/App.xcworkspace/xcuserdata/
+/ios/DerivedData/
 
 # misc
 .DS_Store

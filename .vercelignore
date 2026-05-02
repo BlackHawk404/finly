@@ -1,0 +1,13 @@
+# Native + desktop wrapper outputs — Vercel only needs the Next.js source
+android/
+ios/
+electron/
+build/
+dist/
+out/
+*.dmg
+*.apk
+*.ipa
+capacitor.config.ts
+electron-builder.yml
+BUILD.md

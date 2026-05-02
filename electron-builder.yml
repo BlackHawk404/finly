@@ -1,0 +1,49 @@
+appId: com.finly.app
+productName: Finly
+copyright: Copyright © 2026 Finly
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - electron/**
+  - out/**
+  - package.json
+
+asar: true
+
+mac:
+  category: public.app-category.finance
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+  icon: build/icon.png
+  identity: null  # Skip signing for personal builds
+  hardenedRuntime: false
+  gatekeeperAssess: false
+
+dmg:
+  title: Finly ${version}
+  background: null
+  window:
+    width: 540
+    height: 380
+  contents:
+    - x: 140
+      y: 200
+    - x: 400
+      y: 200
+      type: link
+      path: /Applications
+
+win:
+  target: nsis
+  icon: build/icon.ico
+
+linux:
+  target: AppImage
+  category: Office
+  icon: build/icon.png
