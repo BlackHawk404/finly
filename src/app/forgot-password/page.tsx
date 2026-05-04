@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
@@ -44,10 +45,20 @@ export default function ForgotPasswordPage() {
         <ArrowLeft size={16} /> Back
       </Button>
 
-      <h1 className="mb-1 text-2xl font-bold">Reset password</h1>
-      <p className="mb-5 text-sm text-[var(--muted-foreground)]">
-        We&apos;ll send you a link to set a new password.
-      </p>
+      <div className="mb-5 flex flex-col items-center text-center">
+        <Image
+          src="/Logo.png"
+          alt="Finly"
+          width={120}
+          height={159}
+          priority
+          className="mb-3 h-auto w-20"
+        />
+        <h1 className="text-2xl font-bold">Reset password</h1>
+        <p className="text-xs text-[var(--muted-foreground)]">
+          We&apos;ll send you a link to set a new password.
+        </p>
+      </div>
 
       {sent ? (
         <Card className="p-4 text-sm">

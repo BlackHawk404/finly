@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ArrowLeft, LogIn, Sparkles } from "lucide-react";
+import { ArrowLeft, LogIn } from "lucide-react";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -44,16 +45,19 @@ export default function LoginPage() {
         <ArrowLeft size={16} /> Back
       </Button>
 
-      <div className="mb-5 flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
-          <Sparkles size={18} />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Sign in</h1>
-          <p className="text-xs text-[var(--muted-foreground)]">
-            Sync your data across devices.
-          </p>
-        </div>
+      <div className="mb-5 flex flex-col items-center text-center">
+        <Image
+          src="/Logo.png"
+          alt="Finly"
+          width={120}
+          height={159}
+          priority
+          className="mb-3 h-auto w-20"
+        />
+        <h1 className="text-2xl font-bold">Sign in</h1>
+        <p className="text-xs text-[var(--muted-foreground)]">
+          Sync your data across devices.
+        </p>
       </div>
 
       {!isSupabaseConfigured && (

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
-import { LogIn, Sparkles } from "lucide-react";
+import { LogIn } from "lucide-react";
 
 export function WelcomeDialog() {
   const { userName, loaded, setUserName } = useSettingsStore();
@@ -30,11 +31,18 @@ export function WelcomeDialog() {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center">
       <div className="w-full max-w-md rounded-t-2xl bg-[var(--card)] p-6 shadow-xl sm:rounded-2xl">
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
-          <Sparkles size={22} />
+        <div className="mb-4 flex justify-center">
+          <Image
+            src="/Logo.png"
+            alt="Finly"
+            width={120}
+            height={159}
+            priority
+            className="h-auto w-24"
+          />
         </div>
-        <h2 className="text-xl font-bold">Welcome to Finly</h2>
-        <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+        <h2 className="text-center text-xl font-bold">Welcome</h2>
+        <p className="mt-1 text-center text-sm text-[var(--muted-foreground)]">
           What should we call you? You can change this anytime in Settings.
         </p>
 
