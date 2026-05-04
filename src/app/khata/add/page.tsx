@@ -17,7 +17,7 @@ function AddKhataInner() {
       <Button variant="ghost" onClick={() => router.back()} className="mb-2 -ml-3">
         <ArrowLeft size={16} /> Back
       </Button>
-      <h1 className="mb-4 text-2xl font-bold">New Khata Entry</h1>
+      <h1 className="mb-4 text-2xl font-bold">New Ledger Entry</h1>
       <KhataForm
         defaultPersonName={personName}
         initial={type ? { type } : undefined}

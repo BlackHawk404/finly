@@ -11,7 +11,7 @@ import { ArrowDownCircle, ArrowUpCircle, BookOpen, ChevronRight, Plus, Wallet } 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-type Filter = "all" | "lent" | "borrowed" | "settled";
+type Filter = "all" | "lent" | "borrowed" | "cleared";
 
 export default function KhataPage() {
   const currency = useSettingsStore((s) => s.currency);
@@ -22,10 +22,10 @@ export default function KhataPage() {
   const totals = entries ? totalsForCurrency(entries, currency) : { theyOweYou: 0, youOwe: 0, net: 0 };
 
   const filtered = summaries.filter((s) => {
-    if (filter === "all") return s.pendingCount > 0 || s.netLent !== 0;
+    if (filter === "all") return true;
     if (filter === "lent") return s.netLent > 0;
     if (filter === "borrowed") return s.netLent < 0;
-    if (filter === "settled") return s.pendingCount === 0;
+    if (filter === "cleared") return s.netLent === 0;
     return true;
   });
 
@@ -92,7 +92,7 @@ export default function KhataPage() {
 
       {/* Filters */}
       <div className="mb-4 flex gap-2 overflow-x-auto no-scrollbar">
-        {(["all", "lent", "borrowed", "settled"] as Filter[]).map((f) => {
+        {(["all", "lent", "borrowed", "cleared"] as Filter[]).map((f) => {
           const label =
             f === "all"
               ? "All"
@@ -100,7 +100,7 @@ export default function KhataPage() {
               ? "They owe me"
               : f === "borrowed"
               ? "I owe"
-              : "Settled";
+              : "Cleared";
           return (
             <button
               key={f}
@@ -133,7 +133,6 @@ export default function KhataPage() {
             const slug = encodeURIComponent(p.personName.trim().toLowerCase());
             const isYouAreOwed = p.netLent > 0;
             const isYouOwe = p.netLent < 0;
-            const settled = p.pendingCount === 0;
             const initial = p.personName.trim().charAt(0).toUpperCase();
             return (
               <Link
@@ -157,14 +156,12 @@ export default function KhataPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{p.personName}</p>
                     <p className="text-xs text-[var(--muted-foreground)]">
-                      {settled
-                        ? "All settled"
+                      {p.netLent === 0
+                        ? "Cleared"
                         : isYouAreOwed
                         ? "owes you"
-                        : isYouOwe
-                        ? "you owe"
-                        : "even"}
-                      {!settled && ` · ${p.pendingCount} pending`}
+                        : "you owe"}
+                      {p.pendingCount > 0 && ` · ${p.pendingCount} ${p.pendingCount === 1 ? "entry" : "entries"}`}
                     </p>
                   </div>
                   <div className="text-right">

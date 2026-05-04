@@ -112,3 +112,30 @@ export function totalsForCurrency(entries: KhataEntry[], currency: string): Khat
   const youOwe = pending.filter((e) => e.type === "borrowed").reduce((s, e) => s + e.amount, 0);
   return { theyOweYou, youOwe, net: theyOweYou - youOwe };
 }
+
+// ---------------- Running ledger ----------------
+
+export interface LedgerRow {
+  entry: KhataEntry;
+  balance: number; // running net (gave - got) up to and including this row
+}
+
+// Returns rows oldest -> newest with a running balance.
+// `lent` = you gave, `borrowed` = you got.
+// Settled (legacy) entries are excluded so balances stay consistent with totals.
+export function runningLedger(entries: KhataEntry[]): LedgerRow[] {
+  const active = entries
+    .filter((e) => e.status !== "settled")
+    .slice()
+    .sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt)
+    );
+  let balance = 0;
+  const rows: LedgerRow[] = [];
+  for (const entry of active) {
+    balance += entry.type === "lent" ? entry.amount : -entry.amount;
+    rows.push({ entry, balance });
+  }
+  return rows;
+}

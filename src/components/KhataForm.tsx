@@ -111,7 +111,7 @@ export function KhataForm({ initial, editId, defaultPersonName, onSaved }: Khata
               : "text-[var(--muted-foreground)]"
           )}
         >
-          <ArrowUpCircle size={16} /> I Lent
+          <ArrowUpCircle size={16} /> You Gave
         </button>
         <button
           type="button"
@@ -123,14 +123,14 @@ export function KhataForm({ initial, editId, defaultPersonName, onSaved }: Khata
               : "text-[var(--muted-foreground)]"
           )}
         >
-          <ArrowDownCircle size={16} /> I Borrowed
+          <ArrowDownCircle size={16} /> You Got
         </button>
       </div>
 
       <p className="text-xs text-[var(--muted-foreground)]">
         {type === "lent"
-          ? "You gave money to someone. They owe you."
-          : "Someone gave you money. You owe them."}
+          ? "Money out — a loan or a repayment to them."
+          : "Money in — they paid you, or you took a loan from them."}
       </p>
 
       {/* Amount */}
@@ -223,7 +223,7 @@ export function KhataForm({ initial, editId, defaultPersonName, onSaved }: Khata
           "Saving..."
         ) : (
           <>
-            <Check size={18} /> {editId ? "Update Entry" : "Save to Khata"}
+            <Check size={18} /> {editId ? "Update Entry" : "Add to Ledger"}
           </>
         )}
       </Button>
