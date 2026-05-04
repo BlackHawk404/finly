@@ -14,15 +14,15 @@ export interface ButtonProps
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 active:opacity-80",
+    "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm shadow-[var(--primary)]/20 hover:bg-[var(--brand-deep)] active:scale-[0.98]",
   secondary:
-    "bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]",
+    "bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)] active:scale-[0.98]",
   outline:
-    "border border-[var(--border)] bg-transparent text-[var(--foreground)] hover:bg-[var(--accent)]",
+    "border border-[var(--border)] bg-transparent text-[var(--foreground)] hover:border-[var(--primary)]/40 hover:bg-[var(--primary-soft)] hover:text-[var(--primary)] active:scale-[0.98]",
   ghost:
-    "bg-transparent text-[var(--foreground)] hover:bg-[var(--accent)]",
+    "bg-transparent text-[var(--foreground)] hover:bg-[var(--accent)] active:scale-[0.98]",
   destructive:
-    "bg-[var(--destructive)] text-[var(--destructive-foreground)] hover:opacity-90",
+    "bg-[var(--destructive)] text-[var(--destructive-foreground)] shadow-sm shadow-[var(--destructive)]/20 hover:opacity-90 active:scale-[0.98]",
 };
 
 const sizeStyles: Record<Size, string> = {

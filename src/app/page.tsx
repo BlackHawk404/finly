@@ -8,7 +8,7 @@ import { formatMoney, currentMonthKey, monthKey, formatDate, todayISO } from "@/
 import { getCategory } from "@/lib/categories";
 import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/CategoryIcon";
-import { Mic, Pencil, ArrowDownCircle, ArrowUpCircle, Wallet, Settings, BookOpen, ChevronRight } from "lucide-react";
+import { Mic, Pencil, ArrowUpCircle, Wallet, Settings, BookOpen, ChevronRight } from "lucide-react";
 import { totalsForCurrency } from "@/lib/khata";
 
 function timeOfDayGreeting() {
@@ -89,60 +89,78 @@ export default function HomePage() {
       </header>
 
       {/* Balance hero card */}
-      <Card className="mb-3 overflow-hidden border-0 bg-gradient-to-br from-[var(--primary)] to-purple-600 text-white shadow-lg">
-        <div className="p-5">
-          <div className="flex items-center gap-1.5 text-xs uppercase tracking-wider opacity-80">
-            <Wallet size={12} /> Balance this month
+      <Card className="brand-gradient relative mb-4 overflow-hidden border-0 text-white shadow-xl shadow-[var(--brand-deep)]/15">
+        {/* Decorative orbs */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10 blur-2xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-black/10 blur-3xl"
+        />
+        <div className="relative p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/85">
+              <Wallet size={12} /> Balance · this month
+            </div>
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white/90 backdrop-blur">
+              {new Date().toLocaleDateString(undefined, { month: "short" })}
+            </span>
           </div>
-          <p className="mt-1 text-4xl font-bold">
+          <p className="mt-3 text-4xl font-bold tracking-tight tabular-nums">
             {balance < 0 ? "-" : ""}
             {formatMoney(balance, currency)}
           </p>
-          <p className="mt-1 text-xs opacity-80">
-            Today spent: <strong>{formatMoney(todayExpense, currency)}</strong>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-xl bg-white/10 px-3 py-2 backdrop-blur">
+              <p className="text-[10px] uppercase tracking-wider text-white/70">
+                Income
+              </p>
+              <p className="mt-0.5 font-semibold tabular-nums">
+                {formatMoney(monthIncome, currency)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/10 px-3 py-2 backdrop-blur">
+              <p className="text-[10px] uppercase tracking-wider text-white/70">
+                Spent
+              </p>
+              <p className="mt-0.5 font-semibold tabular-nums">
+                {formatMoney(monthExpense, currency)}
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-white/80">
+            Today: <strong className="font-semibold">{formatMoney(todayExpense, currency)}</strong>
           </p>
         </div>
       </Card>
-
-      {/* Income / Expense breakdown */}
-      <div className="mb-4 grid grid-cols-2 gap-3">
-        <Card className="p-4">
-          <div className="mb-1 flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
-            <ArrowUpCircle size={14} className="text-[var(--success)]" /> Income
-          </div>
-          <p className="text-lg font-bold text-[var(--success)]">
-            {formatMoney(monthIncome, currency)}
-          </p>
-        </Card>
-        <Card className="p-4">
-          <div className="mb-1 flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
-            <ArrowDownCircle size={14} className="text-[var(--destructive)]" /> Expenses
-          </div>
-          <p className="text-lg font-bold text-[var(--destructive)]">
-            {formatMoney(monthExpense, currency)}
-          </p>
-        </Card>
-      </div>
 
       {/* Quick actions */}
       <div className="mb-3 grid grid-cols-2 gap-3">
         <Link
           href="/add?mode=manual&type=expense"
-          className="flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-4 transition active:scale-95"
+          className="card-elev group flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-4 transition hover:-translate-y-0.5 hover:border-[var(--primary)]/40 active:scale-[0.98]"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)] transition group-hover:scale-110">
             <Pencil size={18} />
           </div>
-          <span className="text-sm font-medium">Type</span>
+          <div>
+            <p className="text-sm font-semibold">Type</p>
+            <p className="text-[11px] text-[var(--muted-foreground)]">Quick entry</p>
+          </div>
         </Link>
         <Link
           href="/add?mode=voice&type=expense"
-          className="flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-4 transition active:scale-95"
+          className="card-elev group flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-4 transition hover:-translate-y-0.5 hover:border-red-500/40 active:scale-[0.98]"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-red-500">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-red-500 transition group-hover:scale-110">
             <Mic size={18} />
           </div>
-          <span className="text-sm font-medium">Speak</span>
+          <div>
+            <p className="text-sm font-semibold">Speak</p>
+            <p className="text-[11px] text-[var(--muted-foreground)]">Voice entry</p>
+          </div>
         </Link>
       </div>
 
@@ -165,13 +183,13 @@ export default function HomePage() {
       {/* Khata snapshot */}
       <Link
         href="/khata"
-        className="mb-6 flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-3 transition active:scale-[0.99]"
+        className="card-elev mb-6 flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-3 transition hover:border-[var(--primary)]/40 active:scale-[0.99]"
       >
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
           <BookOpen size={18} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">Khata · Lend / Borrow</p>
+          <p className="text-sm font-semibold">Khata · Lend / Borrow</p>
           <p className="truncate text-xs text-[var(--muted-foreground)]">
             {hasKhata
               ? `Owed ${formatMoney(khataTotals.theyOweYou, currency)} · You owe ${formatMoney(khataTotals.youOwe, currency)}`
@@ -194,8 +212,12 @@ export default function HomePage() {
 
         {recent.length === 0 ? (
           <Card className="p-8 text-center">
-            <p className="text-sm text-[var(--muted-foreground)]">
-              No transactions yet. Tap the + button to add your first one.
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
+              <Wallet size={20} />
+            </div>
+            <p className="text-sm font-semibold">No transactions yet</p>
+            <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+              Tap the <span className="font-medium text-[var(--primary)]">+</span> button below to add your first one.
             </p>
           </Card>
         ) : (

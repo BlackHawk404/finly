@@ -30,7 +30,7 @@ export function BottomNav() {
                 key={item.href}
                 href={item.href}
                 aria-label={item.label}
-                className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] shadow-lg shadow-[var(--primary)]/30 transition-transform active:scale-95"
+                className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--brand-deep)] text-[var(--primary-foreground)] shadow-lg shadow-[var(--primary)]/30 transition hover:scale-105 active:scale-95"
               >
                 <Icon size={26} strokeWidth={2.5} />
               </Link>
@@ -43,12 +43,18 @@ export function BottomNav() {
               href={item.href}
               aria-label={item.label}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-1 text-xs transition-colors",
+                "relative flex flex-1 flex-col items-center gap-1 py-1.5 text-xs transition-colors",
                 active
                   ? "text-[var(--primary)]"
                   : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               )}
             >
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute -top-0.5 h-1 w-6 rounded-full bg-[var(--primary)]"
+                />
+              )}
               <Icon size={20} strokeWidth={active ? 2.5 : 2} />
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>

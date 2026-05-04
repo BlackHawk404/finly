@@ -1,49 +1,55 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
+  --background: #f8faf8;
   --foreground: #0a0a0a;
   --card: #ffffff;
   --card-foreground: #0a0a0a;
-  --primary: #6366f1;
+  --primary: #15803d;
   --primary-foreground: #ffffff;
-  --secondary: #f4f4f5;
+  --primary-soft: #dcfce7;
+  --brand-deep: #14532d;
+  --brand-bright: #22c55e;
+  --secondary: #f1f5f2;
   --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
+  --muted: #f1f5f2;
+  --muted-foreground: #6b7280;
+  --accent: #ecfdf5;
+  --accent-foreground: #14532d;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --success: #10b981;
+  --success: #16a34a;
   --warning: #f59e0b;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #6366f1;
-  --radius: 0.75rem;
+  --border: #e4e7e4;
+  --input: #e4e7e4;
+  --ring: #16a34a;
+  --radius: 0.875rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #0a0f0c;
     --foreground: #fafafa;
-    --card: #18181b;
+    --card: #11181a;
     --card-foreground: #fafafa;
-    --primary: #818cf8;
-    --primary-foreground: #1e1b4b;
-    --secondary: #27272a;
+    --primary: #4ade80;
+    --primary-foreground: #052e16;
+    --primary-soft: rgba(74, 222, 128, 0.12);
+    --brand-deep: #052e16;
+    --brand-bright: #4ade80;
+    --secondary: #1a221d;
     --secondary-foreground: #fafafa;
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
-    --accent: #27272a;
-    --accent-foreground: #fafafa;
+    --muted: #1a221d;
+    --muted-foreground: #9aa39d;
+    --accent: #14532d;
+    --accent-foreground: #dcfce7;
     --destructive: #f87171;
     --destructive-foreground: #ffffff;
-    --success: #34d399;
+    --success: #4ade80;
     --warning: #fbbf24;
-    --border: #27272a;
-    --input: #27272a;
-    --ring: #818cf8;
+    --border: #1f2924;
+    --input: #1f2924;
+    --ring: #4ade80;
   }
 }
 
@@ -112,6 +118,29 @@ body {
 }
 .animate-fade-in {
   animation: fadeIn 0.25s ease-out;
+}
+
+/* Slow, drifting brand gradient for hero/auth backgrounds */
+@keyframes brandShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.brand-gradient {
+  background-image: linear-gradient(
+    135deg,
+    var(--brand-deep) 0%,
+    var(--primary) 45%,
+    var(--brand-bright) 100%
+  );
+  background-size: 180% 180%;
+  animation: brandShift 14s ease-in-out infinite;
+}
+
+/* Subtle elevated card variant */
+.card-elev {
+  box-shadow:
+    0 1px 2px rgba(20, 83, 45, 0.04),
+    0 8px 24px -8px rgba(20, 83, 45, 0.08);
 }
 
 /* Pulse animation for recording mic */

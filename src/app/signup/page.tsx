@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { AuthShell } from "@/components/AuthShell";
+import { UserPlus } from "lucide-react";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export default function SignupPage() {
@@ -47,7 +47,6 @@ export default function SignupPage() {
       return;
     }
     if (data.session) {
-      // Email confirmation disabled — already signed in.
       router.replace("/settings");
     } else {
       setInfo("Check your inbox to confirm your email, then sign in.");
@@ -55,26 +54,10 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="animate-fade-in px-4 pt-6">
-      <Button variant="ghost" onClick={() => router.back()} className="mb-2 -ml-3">
-        <ArrowLeft size={16} /> Back
-      </Button>
-
-      <div className="mb-5 flex flex-col items-center text-center">
-        <Image
-          src="/Logo.png"
-          alt="Finly"
-          width={120}
-          height={159}
-          priority
-          className="mb-3 h-auto w-20"
-        />
-        <h1 className="text-2xl font-bold">Create account</h1>
-        <p className="text-xs text-[var(--muted-foreground)]">
-          Save your data to the cloud and sync everywhere.
-        </p>
-      </div>
-
+    <AuthShell
+      title="Create your account"
+      subtitle="Save your data to the cloud and sync across devices — for free."
+    >
       {!isSupabaseConfigured && (
         <Card className="mb-4 p-4 text-sm text-[var(--muted-foreground)]">
           Sync isn&apos;t configured for this build.
@@ -83,13 +66,14 @@ export default function SignupPage() {
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="email" className="mb-2 block">
+          <Label htmlFor="email" className="mb-1.5 block">
             Email
           </Label>
           <Input
             id="email"
             type="email"
             autoComplete="email"
+            placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -97,41 +81,52 @@ export default function SignupPage() {
           />
         </div>
         <div>
-          <Label htmlFor="password" className="mb-2 block">
+          <Label htmlFor="password" className="mb-1.5 block">
             Password
           </Label>
           <Input
             id="password"
             type="password"
             autoComplete="new-password"
+            placeholder="At least 6 characters"
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-            At least 6 characters.
-          </p>
         </div>
 
-        {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
+        {error && (
+          <p className="rounded-md bg-[var(--destructive)]/8 px-3 py-2 text-sm text-[var(--destructive)]">
+            {error}
+          </p>
+        )}
         {info && (
-          <Card className="p-3 text-sm">
+          <p className="rounded-md bg-[var(--primary-soft)] px-3 py-2 text-sm text-[var(--accent-foreground)]">
             {info}
-          </Card>
+          </p>
         )}
 
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-          {submitting ? "Creating..." : (<><UserPlus size={16} /> Create account</>)}
+          {submitting ? (
+            "Creating..."
+          ) : (
+            <>
+              <UserPlus size={16} /> Create account
+            </>
+          )}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-[var(--muted-foreground)]">
+      <p className="mt-5 text-center text-sm text-[var(--muted-foreground)]">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-[var(--primary)] underline-offset-2 hover:underline">
+        <Link
+          href="/login"
+          className="font-semibold text-[var(--primary)] underline-offset-2 hover:underline"
+        >
           Sign in
         </Link>
       </p>
-    </div>
+    </AuthShell>
   );
 }
