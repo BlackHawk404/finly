@@ -20,7 +20,10 @@ export default function HistoryPage() {
   const [categoryId, setCategoryId] = useState<string | "all">("all");
 
   const expenses = useLiveQuery(
-    async () => db.expenses.orderBy("date").reverse().toArray(),
+    async () =>
+      (await db.expenses.orderBy("date").reverse().toArray()).filter(
+        (e) => !e.deletedAt
+      ),
     [],
     []
   );

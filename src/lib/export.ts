@@ -11,7 +11,9 @@ function csvEscape(v: string | number): string {
 }
 
 export async function exportExpensesAsCSV(): Promise<void> {
-  const expenses = await db.expenses.orderBy("date").reverse().toArray();
+  const expenses = (await db.expenses.orderBy("date").reverse().toArray()).filter(
+    (e) => !e.deletedAt
+  );
   if (expenses.length === 0) {
     alert("No expenses to export.");
     return;

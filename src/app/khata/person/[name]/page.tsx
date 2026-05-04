@@ -30,7 +30,11 @@ export default function PersonKhataPage({
   const router = useRouter();
   const currency = useSettingsStore((s) => s.currency);
 
-  const allEntries = useLiveQuery(async () => db.khata.toArray(), [], []);
+  const allEntries = useLiveQuery(
+    async () => (await db.khata.toArray()).filter((e) => !e.deletedAt),
+    [],
+    []
+  );
   const personEntries = (allEntries ?? []).filter(
     (e) => e.personName.trim().toLowerCase() === decoded.trim().toLowerCase()
   );

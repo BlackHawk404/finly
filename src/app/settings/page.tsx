@@ -1,16 +1,47 @@
 "use client";
 
+import Link from "next/link";
 import { useSettingsStore } from "@/store/useSettingsStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { CURRENCIES } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { exportExpensesAsCSV, clearAllData } from "@/lib/export";
-import { Download, Trash2 } from "lucide-react";
+import { runSync } from "@/lib/sync";
+import {
+  Cloud,
+  CloudOff,
+  Download,
+  LogIn,
+  LogOut,
+  RefreshCw,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 import { useState } from "react";
 
 export default function SettingsPage() {
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      await runSync();
+      setSyncMsg("Synced.");
+    } catch (err) {
+      setSyncMsg(err instanceof Error ? err.message : "Sync failed.");
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncMsg(null), 3000);
+    }
+  }
+
   const {
     currency,
     setCurrency,
@@ -38,6 +69,73 @@ export default function SettingsPage() {
   return (
     <div className="animate-fade-in px-4 pt-6">
       <h1 className="mb-6 text-2xl font-bold">Settings</h1>
+
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+        Account
+      </h2>
+
+      {user ? (
+        <Card className="mb-6 p-4">
+          <div className="mb-3 flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--success)]/10 text-[var(--success)]">
+              <Cloud size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{user.email}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Signed in · syncing to cloud
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSync}
+              disabled={syncing}
+              className="w-full"
+            >
+              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
+              {syncing ? "Syncing..." : "Sync now"}
+            </Button>
+            <Button variant="outline" onClick={signOut} className="w-full">
+              <LogOut size={14} /> Sign out
+            </Button>
+          </div>
+          {syncMsg && (
+            <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">
+              {syncMsg}
+            </p>
+          )}
+        </Card>
+      ) : (
+        <Card className="mb-6 p-4">
+          <div className="mb-3 flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)]">
+              <CloudOff size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Local only</p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Sign in to sync across devices.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/login"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--border)] text-sm font-medium hover:bg-[var(--accent)]"
+            >
+              <LogIn size={14} /> Sign in
+            </Link>
+            <Link
+              href="/signup"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--primary)] text-sm font-medium text-[var(--primary-foreground)] hover:opacity-90"
+            >
+              <UserPlus size={14} /> Sign up
+            </Link>
+          </div>
+        </Card>
+      )}
 
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
         Profile
@@ -148,7 +246,7 @@ export default function SettingsPage() {
       </Card>
 
       <p className="mt-6 text-center text-xs text-[var(--muted-foreground)]">
-        Finly v0.1 · All data stored locally on this device.
+        Finly v0.2 · {user ? "Synced to cloud" : "Local only"}
       </p>
     </div>
   );

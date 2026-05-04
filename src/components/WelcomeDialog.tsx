@@ -1,19 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSettingsStore } from "@/store/useSettingsStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
-import { Sparkles } from "lucide-react";
+import { LogIn, Sparkles } from "lucide-react";
 
 export function WelcomeDialog() {
   const { userName, loaded, setUserName } = useSettingsStore();
+  const user = useAuthStore((s) => s.user);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
 
   useEffect(() => {
-    if (loaded && !userName) setOpen(true);
-  }, [loaded, userName]);
+    if (loaded && !userName && !user) setOpen(true);
+  }, [loaded, userName, user]);
 
   async function save() {
     const name = value.trim();
@@ -66,6 +69,19 @@ export function WelcomeDialog() {
             </Button>
           </div>
         </form>
+
+        <div className="mt-4 flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+          <span className="h-px flex-1 bg-[var(--border)]" />
+          <span>or sync across devices</span>
+          <span className="h-px flex-1 bg-[var(--border)]" />
+        </div>
+        <Link
+          href="/login"
+          onClick={() => setOpen(false)}
+          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--border)] text-sm font-medium hover:bg-[var(--accent)]"
+        >
+          <LogIn size={14} /> Sign in or create account
+        </Link>
       </div>
     </div>
   );

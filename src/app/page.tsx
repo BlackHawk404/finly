@@ -25,7 +25,10 @@ export default function HomePage() {
   const userName = useSettingsStore((s) => s.userName);
 
   const transactions = useLiveQuery(
-    async () => await db.expenses.orderBy("createdAt").reverse().toArray(),
+    async () =>
+      (await db.expenses.orderBy("createdAt").reverse().toArray()).filter(
+        (e) => !e.deletedAt
+      ),
     [],
     []
   );
@@ -50,7 +53,11 @@ export default function HomePage() {
 
   const recent = (transactions ?? []).slice(0, 5);
 
-  const khataEntries = useLiveQuery(async () => db.khata.toArray(), [], []);
+  const khataEntries = useLiveQuery(
+    async () => (await db.khata.toArray()).filter((e) => !e.deletedAt),
+    [],
+    []
+  );
   const khataTotals = khataEntries
     ? totalsForCurrency(khataEntries, currency)
     : { theyOweYou: 0, youOwe: 0, net: 0 };

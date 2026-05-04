@@ -36,7 +36,11 @@ export function KhataForm({ initial, editId, defaultPersonName, onSaved }: Khata
   const [error, setError] = useState<string | null>(null);
 
   // Suggest names from existing khata entries
-  const allEntries = useLiveQuery(async () => db.khata.toArray(), [], []);
+  const allEntries = useLiveQuery(
+    async () => (await db.khata.toArray()).filter((e) => !e.deletedAt),
+    [],
+    []
+  );
   const knownNames = Array.from(
     new Map(
       (allEntries ?? []).map((e) => [

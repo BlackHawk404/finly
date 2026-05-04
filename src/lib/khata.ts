@@ -1,4 +1,14 @@
 import { db, KhataEntry, KhataType, uid } from "./db";
+import { triggerSync } from "./sync";
+import { useAuthStore } from "@/store/useAuthStore";
+
+function now() {
+  return new Date().toISOString();
+}
+
+function isSignedIn() {
+  return Boolean(useAuthStore.getState().user);
+}
 
 export interface KhataDraft {
   type: KhataType;
@@ -10,15 +20,19 @@ export interface KhataDraft {
 }
 
 export async function saveKhata(draft: KhataDraft): Promise<KhataEntry> {
+  const ts = now();
   const entry: KhataEntry = {
     id: uid(),
     status: "pending",
-    createdAt: new Date().toISOString(),
+    createdAt: ts,
+    updatedAt: ts,
+    dirty: 1,
     ...draft,
     personName: draft.personName.trim(),
     description: draft.description.trim(),
   };
   await db.khata.put(entry);
+  triggerSync();
   return entry;
 }
 
@@ -28,18 +42,27 @@ export async function updateKhata(
 ): Promise<void> {
   if (patch.personName !== undefined) patch.personName = patch.personName.trim();
   if (patch.description !== undefined) patch.description = patch.description.trim();
-  await db.khata.update(id, patch);
+  await db.khata.update(id, { ...patch, updatedAt: now(), dirty: 1 });
+  triggerSync();
 }
 
 export async function deleteKhata(id: string): Promise<void> {
-  await db.khata.delete(id);
+  if (isSignedIn()) {
+    await db.khata.update(id, { deletedAt: now(), updatedAt: now(), dirty: 1 });
+    triggerSync();
+  } else {
+    await db.khata.delete(id);
+  }
 }
 
 export async function setKhataStatus(id: string, status: "pending" | "settled"): Promise<void> {
   await db.khata.update(id, {
     status,
-    settledAt: status === "settled" ? new Date().toISOString() : undefined,
+    settledAt: status === "settled" ? now() : undefined,
+    updatedAt: now(),
+    dirty: 1,
   });
+  triggerSync();
 }
 
 export async function settleAllForPerson(personName: string): Promise<void> {
@@ -48,12 +71,19 @@ export async function settleAllForPerson(personName: string): Promise<void> {
   const ids = entries
     .filter((e) => e.personName.trim().toLowerCase() === target && e.status === "pending")
     .map((e) => e.id);
+  const ts = now();
   await db.khata.bulkUpdate(
     ids.map((id) => ({
       key: id,
-      changes: { status: "settled" as const, settledAt: new Date().toISOString() },
+      changes: {
+        status: "settled" as const,
+        settledAt: ts,
+        updatedAt: ts,
+        dirty: 1 as const,
+      },
     }))
   );
+  triggerSync();
 }
 
 // ---------------- Aggregations ----------------

@@ -17,8 +17,16 @@ import { ArrowDownCircle, ArrowUpCircle, Wallet } from "lucide-react";
 export default function InsightsPage() {
   const currency = useSettingsStore((s) => s.currency);
 
-  const transactions = useLiveQuery(async () => db.expenses.toArray(), [], []);
-  const budgets = useLiveQuery(async () => db.budgets.toArray(), [], []);
+  const transactions = useLiveQuery(
+    async () => (await db.expenses.toArray()).filter((e) => !e.deletedAt),
+    [],
+    []
+  );
+  const budgets = useLiveQuery(
+    async () => (await db.budgets.toArray()).filter((b) => !b.deletedAt),
+    [],
+    []
+  );
 
   const monthTx = useMemo(
     () => (transactions ?? []).filter((e) => monthKey(e.date) === currentMonthKey()),

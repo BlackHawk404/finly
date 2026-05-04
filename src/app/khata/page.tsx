@@ -17,7 +17,11 @@ export default function KhataPage() {
   const currency = useSettingsStore((s) => s.currency);
   const [filter, setFilter] = useState<Filter>("all");
 
-  const entries = useLiveQuery(async () => db.khata.toArray(), [], []);
+  const entries = useLiveQuery(
+    async () => (await db.khata.toArray()).filter((e) => !e.deletedAt),
+    [],
+    []
+  );
   const summaries = entries ? summarizeByPerson(entries) : [];
   const totals = entries ? totalsForCurrency(entries, currency) : { theyOweYou: 0, youOwe: 0, net: 0 };
 

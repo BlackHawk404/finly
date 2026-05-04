@@ -1,16 +1,18 @@
 # Finly — Personal Finance PWA
 
-A free, private, offline-first expense tracker. Add expenses by typing — or by speaking. Your browser transcribes, a local parser extracts the details, and you confirm before saving.
+A free, offline-first expense tracker with optional cloud sync. Add expenses by typing — or by speaking. Your browser transcribes, a local parser extracts the details, and you confirm before saving.
 
-All data stays on your device (IndexedDB). No accounts, no servers, no API keys.
+Data lives on your device (IndexedDB) by default. Sign up to also sync it to the cloud (Supabase) and access your account from any device. Sign-in is **optional** — the app works fully without an account.
 
 ## Features
 
 - **Manual entry** — fast form with category chips, payment method, date.
 - **Voice entry** — tap mic, say *"Spent 250 rupees on groceries yesterday with card"*, review the auto-filled form, save.
+- **Khata ledger** — track money lent and borrowed with a per-person running balance.
 - **Insights** — monthly total, daily average, 14-day trend, category pie, per-category budgets.
 - **History** — searchable, filterable list grouped by date.
 - **CSV export** — download a backup any time from Settings.
+- **Optional cloud sync** — create a free account to access your data from any device. All sync is local-first; the app keeps working offline.
 - **PWA** — install to iPhone / Android / desktop home screen.
 - **11 currencies** including USD, EUR, GBP, INR, PKR, AED, SAR, JPY.
 - **9 voice languages** including English (US/UK/India), Hindi, Urdu, Spanish, French, German, Arabic.
@@ -53,9 +55,21 @@ Voice recognition runs in the browser and requires an internet connection.
 
 ## Privacy
 
-- All expenses live in your browser's IndexedDB. Nothing leaves your device.
+- Without an account: data lives only in your browser's IndexedDB. Nothing leaves your device.
+- With an account: data is also stored in Supabase Postgres, scoped to your user via Row-Level Security. Only you can read your rows.
 - Voice transcription happens via your browser's speech engine (Apple/Google) — handled by the browser, not by this app.
-- Clearing your browser data will erase your expenses. Use **Settings → Export to CSV** for backups.
+- Clearing your browser data will erase the local copy of your expenses. If you're signed in, sign in again on the same or another device to restore from the cloud.
+
+## Cloud sync setup (self-hosting)
+
+If you fork this repo and want sync to work for your own deployment:
+
+1. Create a free Supabase project at https://supabase.com.
+2. Open the SQL Editor and run [`supabase/schema.sql`](supabase/schema.sql) — creates the tables and Row-Level Security policies.
+3. From Project Settings → API, copy the **Project URL** and the **publishable** (anon) key.
+4. Add them to your hosting environment as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+If those env vars are not set, the auth/sync UI shows "sync not configured" and the app stays fully local — no errors.
 
 ## Deployment
 

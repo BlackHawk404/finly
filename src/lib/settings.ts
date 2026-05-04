@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { triggerSync } from "./sync";
 
 export const SETTING_KEYS = {
   currency: "currency",
@@ -20,7 +21,11 @@ export async function getSetting(key: string, fallback: string): Promise<string>
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
-  await db.settings.put({ key, value });
+  await db.settings.bulkPut([
+    { key, value },
+    { key: "__updatedAt", value: new Date().toISOString() },
+  ]);
+  triggerSync();
 }
 
 export async function getAllSettings() {
