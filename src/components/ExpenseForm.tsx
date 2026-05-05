@@ -34,8 +34,6 @@ interface ExpenseFormProps {
   editId?: string;
   /** Receipt image to attach to the new expense (only on create). */
   receiptBlob?: Blob | null;
-  /** Raw OCR text to store alongside the receipt for debugging/search. */
-  receiptText?: string;
 }
 
 export function ExpenseForm({
@@ -47,7 +45,6 @@ export function ExpenseForm({
   submitLabel,
   editId,
   receiptBlob,
-  receiptText,
 }: ExpenseFormProps) {
   const router = useRouter();
   const { currency, defaultPaymentMethod } = useSettingsStore();
@@ -115,8 +112,8 @@ export function ExpenseForm({
           source,
           rawTranscript,
         });
-        if (receiptBlob) {
-          await saveReceipt(expense.id, receiptBlob, receiptText);
+        if (receiptBlob && receiptBlob.size > 0) {
+          await saveReceipt(expense.id, receiptBlob);
         }
       }
       if (onSaved) {

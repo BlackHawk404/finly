@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseExpense, ParsedExpense } from "@/lib/parser";
-import { ParsedReceipt } from "@/lib/receipt-parser";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { PaymentMethod, TxType } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
@@ -35,12 +34,8 @@ function AddPageInner() {
   const [transcript, setTranscript] = useState<string | null>(null);
   const [parsed, setParsed] = useState<ParsedExpense | null>(null);
 
-  // Scan state
-  const [scanResult, setScanResult] = useState<{
-    parsed: ParsedReceipt;
-    blob: Blob;
-    rawText: string;
-  } | null>(null);
+  // Scan: just an attached image (user enters everything else manually)
+  const [billBlob, setBillBlob] = useState<Blob | null>(null);
 
   function handleTranscript(text: string) {
     const result = parseExpense(text, {
@@ -57,20 +52,22 @@ function AddPageInner() {
     setParsed(null);
   }
 
-  function resetScan() {
-    setScanResult(null);
+  function handleCaptured(blob: Blob) {
+    // Empty blob = "remove" signal from the scanner.
+    if (blob.size === 0) setBillBlob(null);
+    else setBillBlob(blob);
   }
 
   function switchType(t: TxType) {
     setType(t);
     resetVoice();
-    resetScan();
+    setBillBlob(null);
   }
 
   function switchMode(m: Mode) {
     setMode(m);
     if (m !== "voice") resetVoice();
-    if (m !== "scan") resetScan();
+    if (m !== "scan") setBillBlob(null);
   }
 
   const accent = type === "income" ? "var(--success)" : "var(--primary)";
@@ -152,7 +149,6 @@ function AddPageInner() {
 
       {mode === "voice" && parsed && transcript && (
         <div className="space-y-4">
-          {/* Transcript card */}
           <Card
             className="p-4"
             style={{ borderColor: `${accent}40`, background: `color-mix(in srgb, ${accent} 8%, transparent)` }}
@@ -200,64 +196,22 @@ function AddPageInner() {
         </div>
       )}
 
-      {mode === "scan" && !scanResult && (
-        <ReceiptScanner type={type} onParsed={setScanResult} />
-      )}
-
-      {mode === "scan" && scanResult && (
+      {mode === "scan" && (
         <div className="space-y-4">
-          <Card
-            className="p-4"
-            style={{
-              borderColor: `${accent}40`,
-              background: `color-mix(in srgb, ${accent} 8%, transparent)`,
-            }}
-          >
-            <p
-              className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider"
-              style={{ color: accent }}
-            >
-              <ScanLine size={12} /> From receipt
-            </p>
-            <p className="text-sm leading-relaxed">
-              {scanResult.parsed.confidence.amount
-                ? `Amount and merchant detected.`
-                : `We attached the photo. Please double-check the amount.`}
-            </p>
-          </Card>
+          <ReceiptScanner onCaptured={handleCaptured} existingBlob={billBlob} />
 
-          {!scanResult.parsed.confidence.amount && (
-            <Card className="border-[var(--warning)]/40 bg-[var(--warning)]/10 p-3">
-              <p className="flex items-start gap-2 text-xs">
-                <AlertCircle size={14} className="mt-0.5 shrink-0 text-[var(--warning)]" />
-                Couldn&apos;t read a total reliably — enter it manually.
+          {billBlob && (
+            <div>
+              <p className="mb-3 text-xs uppercase tracking-wider text-[var(--muted-foreground)]">
+                Bill details
               </p>
-            </Card>
+              <ExpenseForm
+                type={type}
+                source="manual"
+                receiptBlob={billBlob}
+              />
+            </div>
           )}
-
-          <div>
-            <p className="mb-3 text-xs uppercase tracking-wider text-[var(--muted-foreground)]">
-              Review and save
-            </p>
-            <ExpenseForm
-              type={type}
-              source="manual"
-              receiptBlob={scanResult.blob}
-              receiptText={scanResult.rawText}
-              initial={{
-                amount: scanResult.parsed.amount ?? undefined,
-                currency: scanResult.parsed.currency ?? currency,
-                categoryId: scanResult.parsed.categoryId,
-                description: scanResult.parsed.description,
-                date: scanResult.parsed.date,
-                paymentMethod: scanResult.parsed.paymentMethod,
-              }}
-            />
-          </div>
-
-          <Button variant="ghost" onClick={resetScan} className="w-full">
-            Scan another
-          </Button>
         </div>
       )}
     </div>
