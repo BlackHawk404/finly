@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/CategoryIcon";
 import { getCategoriesFor } from "@/lib/categories";
 import { saveExpense, updateExpense, ExpenseDraft } from "@/lib/expenses";
+import { saveReceipt } from "@/lib/receipts";
 import { todayISO, getCurrencySymbol } from "@/lib/format";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { PaymentMethod, ExpenseSource, TxType } from "@/lib/db";
@@ -31,6 +32,10 @@ interface ExpenseFormProps {
   submitLabel?: string;
   /** When provided, the form updates the expense with this id instead of creating a new one. */
   editId?: string;
+  /** Receipt image to attach to the new expense (only on create). */
+  receiptBlob?: Blob | null;
+  /** Raw OCR text to store alongside the receipt for debugging/search. */
+  receiptText?: string;
 }
 
 export function ExpenseForm({
@@ -41,6 +46,8 @@ export function ExpenseForm({
   onSaved,
   submitLabel,
   editId,
+  receiptBlob,
+  receiptText,
 }: ExpenseFormProps) {
   const router = useRouter();
   const { currency, defaultPaymentMethod } = useSettingsStore();
@@ -97,7 +104,7 @@ export function ExpenseForm({
           paymentMethod,
         });
       } else {
-        await saveExpense({
+        const expense = await saveExpense({
           type,
           amount: numAmount,
           currency: initial?.currency ?? currency,
@@ -108,6 +115,9 @@ export function ExpenseForm({
           source,
           rawTranscript,
         });
+        if (receiptBlob) {
+          await saveReceipt(expense.id, receiptBlob, receiptText);
+        }
       }
       if (onSaved) {
         onSaved();

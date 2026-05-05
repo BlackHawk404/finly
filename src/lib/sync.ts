@@ -227,7 +227,10 @@ async function purgeTombstones() {
   const expensesDeleted = await db.expenses
     .filter((e) => Boolean(e.deletedAt) && !e.dirty)
     .toArray();
-  await db.expenses.bulkDelete(expensesDeleted.map((e) => e.id));
+  const expenseIds = expensesDeleted.map((e) => e.id);
+  await db.expenses.bulkDelete(expenseIds);
+  // Receipts are local-only, but they live keyed to expenseId — clean up alongside.
+  await db.receipts.bulkDelete(expenseIds);
 
   const budgetsDeleted = await db.budgets
     .filter((b) => Boolean(b.deletedAt) && !b.dirty)

@@ -59,12 +59,22 @@ export interface SyncState {
   lastPulledAt: string;
 }
 
+// Receipt image attached to an expense. Local-only for now (no cloud sync).
+export interface Receipt {
+  expenseId: string; // PK & FK to Expense.id
+  blob: Blob;
+  mimeType: string;
+  rawText?: string; // OCR raw text
+  createdAt: string;
+}
+
 export class FinanceDB extends Dexie {
   expenses!: Table<Expense, string>;
   budgets!: Table<Budget, string>;
   settings!: Table<Setting, string>;
   khata!: Table<KhataEntry, string>;
   syncState!: Table<SyncState, string>;
+  receipts!: Table<Receipt, string>;
 
   constructor() {
     super("finance-app");
@@ -116,6 +126,16 @@ export class FinanceDB extends Dexie {
         await tx.table("budgets").toCollection().modify(stamp);
         await tx.table("khata").toCollection().modify(stamp);
       });
+    // v5: receipts table for OCR'd images attached to expenses.
+    this.version(5).stores({
+      expenses:
+        "id, type, date, categoryId, paymentMethod, source, createdAt, updatedAt, dirty",
+      budgets: "id, updatedAt, dirty",
+      settings: "key",
+      khata: "id, type, personName, status, date, createdAt, updatedAt, dirty",
+      syncState: "key",
+      receipts: "expenseId",
+    });
   }
 }
 

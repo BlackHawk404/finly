@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db, Expense } from "@/lib/db";
 import { ExpenseForm } from "@/components/ExpenseForm";
+import { ReceiptViewer } from "@/components/ReceiptViewer";
 import { Button } from "@/components/ui/Button";
 import { ArrowLeft } from "lucide-react";
 
@@ -52,6 +53,10 @@ export default function EditExpensePage({
       <h1 className="mb-4 text-2xl font-bold">
         Edit {isIncome ? "Income" : "Expense"}
       </h1>
+
+      <div className="mb-5">
+        <ReceiptViewer expenseId={expense.id} />
+      </div>
 
       <ExpenseForm
         editId={expense.id}

@@ -4,15 +4,25 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
-import { Pencil, Mic, Sparkles, AlertCircle, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ReceiptScanner } from "@/components/ReceiptScanner";
+import {
+  Pencil,
+  Mic,
+  Sparkles,
+  AlertCircle,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  ScanLine,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseExpense, ParsedExpense } from "@/lib/parser";
+import { ParsedReceipt } from "@/lib/receipt-parser";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { PaymentMethod, TxType } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
-type Mode = "manual" | "voice";
+type Mode = "manual" | "voice" | "scan";
 
 function AddPageInner() {
   const searchParams = useSearchParams();
@@ -24,6 +34,13 @@ function AddPageInner() {
   const { currency, defaultPaymentMethod } = useSettingsStore();
   const [transcript, setTranscript] = useState<string | null>(null);
   const [parsed, setParsed] = useState<ParsedExpense | null>(null);
+
+  // Scan state
+  const [scanResult, setScanResult] = useState<{
+    parsed: ParsedReceipt;
+    blob: Blob;
+    rawText: string;
+  } | null>(null);
 
   function handleTranscript(text: string) {
     const result = parseExpense(text, {
@@ -40,9 +57,20 @@ function AddPageInner() {
     setParsed(null);
   }
 
+  function resetScan() {
+    setScanResult(null);
+  }
+
   function switchType(t: TxType) {
     setType(t);
     resetVoice();
+    resetScan();
+  }
+
+  function switchMode(m: Mode) {
+    setMode(m);
+    if (m !== "voice") resetVoice();
+    if (m !== "scan") resetScan();
   }
 
   const accent = type === "income" ? "var(--success)" : "var(--primary)";
@@ -79,32 +107,40 @@ function AddPageInner() {
         </button>
       </div>
 
-      {/* Mode toggle: Type / Speak */}
-      <div className="mb-5 grid grid-cols-2 gap-2 rounded-[var(--radius)] bg-[var(--secondary)] p-1">
+      {/* Mode toggle: Type / Speak / Scan */}
+      <div className="mb-5 grid grid-cols-3 gap-2 rounded-[var(--radius)] bg-[var(--secondary)] p-1">
         <button
-          onClick={() => {
-            setMode("manual");
-            resetVoice();
-          }}
+          onClick={() => switchMode("manual")}
           className={cn(
-            "flex items-center justify-center gap-2 rounded-[calc(var(--radius)-4px)] py-2 text-sm font-medium transition",
+            "flex items-center justify-center gap-1.5 rounded-[calc(var(--radius)-4px)] py-2 text-xs font-medium transition",
             mode === "manual"
               ? "bg-[var(--card)] text-[var(--foreground)] shadow"
               : "text-[var(--muted-foreground)]"
           )}
         >
-          <Pencil size={16} /> Type
+          <Pencil size={14} /> Type
         </button>
         <button
-          onClick={() => setMode("voice")}
+          onClick={() => switchMode("voice")}
           className={cn(
-            "flex items-center justify-center gap-2 rounded-[calc(var(--radius)-4px)] py-2 text-sm font-medium transition",
+            "flex items-center justify-center gap-1.5 rounded-[calc(var(--radius)-4px)] py-2 text-xs font-medium transition",
             mode === "voice"
               ? "bg-[var(--card)] text-[var(--foreground)] shadow"
               : "text-[var(--muted-foreground)]"
           )}
         >
-          <Mic size={16} /> Speak
+          <Mic size={14} /> Speak
+        </button>
+        <button
+          onClick={() => switchMode("scan")}
+          className={cn(
+            "flex items-center justify-center gap-1.5 rounded-[calc(var(--radius)-4px)] py-2 text-xs font-medium transition",
+            mode === "scan"
+              ? "bg-[var(--card)] text-[var(--foreground)] shadow"
+              : "text-[var(--muted-foreground)]"
+          )}
+        >
+          <ScanLine size={14} /> Scan
         </button>
       </div>
 
@@ -160,6 +196,67 @@ function AddPageInner() {
 
           <Button variant="ghost" onClick={resetVoice} className="w-full">
             Re-record
+          </Button>
+        </div>
+      )}
+
+      {mode === "scan" && !scanResult && (
+        <ReceiptScanner type={type} onParsed={setScanResult} />
+      )}
+
+      {mode === "scan" && scanResult && (
+        <div className="space-y-4">
+          <Card
+            className="p-4"
+            style={{
+              borderColor: `${accent}40`,
+              background: `color-mix(in srgb, ${accent} 8%, transparent)`,
+            }}
+          >
+            <p
+              className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider"
+              style={{ color: accent }}
+            >
+              <ScanLine size={12} /> From receipt
+            </p>
+            <p className="text-sm leading-relaxed">
+              {scanResult.parsed.confidence.amount
+                ? `Amount and merchant detected.`
+                : `We attached the photo. Please double-check the amount.`}
+            </p>
+          </Card>
+
+          {!scanResult.parsed.confidence.amount && (
+            <Card className="border-[var(--warning)]/40 bg-[var(--warning)]/10 p-3">
+              <p className="flex items-start gap-2 text-xs">
+                <AlertCircle size={14} className="mt-0.5 shrink-0 text-[var(--warning)]" />
+                Couldn&apos;t read a total reliably — enter it manually.
+              </p>
+            </Card>
+          )}
+
+          <div>
+            <p className="mb-3 text-xs uppercase tracking-wider text-[var(--muted-foreground)]">
+              Review and save
+            </p>
+            <ExpenseForm
+              type={type}
+              source="manual"
+              receiptBlob={scanResult.blob}
+              receiptText={scanResult.rawText}
+              initial={{
+                amount: scanResult.parsed.amount ?? undefined,
+                currency: scanResult.parsed.currency ?? currency,
+                categoryId: scanResult.parsed.categoryId,
+                description: scanResult.parsed.description,
+                date: scanResult.parsed.date,
+                paymentMethod: scanResult.parsed.paymentMethod,
+              }}
+            />
+          </div>
+
+          <Button variant="ghost" onClick={resetScan} className="w-full">
+            Scan another
           </Button>
         </div>
       )}

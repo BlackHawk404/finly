@@ -1,5 +1,6 @@
 import { db, Expense, uid, PaymentMethod, ExpenseSource, TxType } from "./db";
 import { triggerSync } from "./sync";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export interface ExpenseDraft {
   type: TxType;
@@ -11,6 +12,10 @@ export interface ExpenseDraft {
   paymentMethod: PaymentMethod;
   source: ExpenseSource;
   rawTranscript?: string;
+}
+
+function isSignedIn() {
+  return Boolean(useAuthStore.getState().user);
 }
 
 export async function saveExpense(draft: ExpenseDraft): Promise<Expense> {
@@ -28,13 +33,20 @@ export async function saveExpense(draft: ExpenseDraft): Promise<Expense> {
 }
 
 export async function deleteExpense(id: string): Promise<void> {
-  // Soft delete so the deletion can propagate to the cloud on next sync.
-  await db.expenses.update(id, {
-    deletedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    dirty: 1,
-  });
-  triggerSync();
+  if (isSignedIn()) {
+    // Soft delete so the deletion can propagate to the cloud on next sync.
+    // Receipt is local-only; remove it now since the expense is going away.
+    await db.expenses.update(id, {
+      deletedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      dirty: 1,
+    });
+    await db.receipts.delete(id);
+    triggerSync();
+  } else {
+    await db.expenses.delete(id);
+    await db.receipts.delete(id);
+  }
 }
 
 export async function updateExpense(
