@@ -6,7 +6,8 @@ import { db } from "@/lib/db";
 import { deleteReceipt } from "@/lib/receipts";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Receipt as ReceiptIcon, Trash2, X } from "lucide-react";
+import { ReceiptLightbox } from "./ReceiptLightbox";
+import { Receipt as ReceiptIcon, Trash2 } from "lucide-react";
 
 interface ReceiptViewerProps {
   expenseId: string;
@@ -24,7 +25,6 @@ export function ReceiptViewer({ expenseId }: ReceiptViewerProps) {
 
   useEffect(() => {
     if (!receipt?.blob) {
-      if (url) URL.revokeObjectURL(url);
       setUrl(null);
       return;
     }
@@ -75,30 +75,7 @@ export function ReceiptViewer({ expenseId }: ReceiptViewerProps) {
         </button>
       </Card>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-          onClick={() => setOpen(false)}
-        >
-          <button
-            type="button"
-            aria-label="Close"
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur"
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpen(false);
-            }}
-          >
-            <X size={18} />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={url}
-            alt="Receipt"
-            className="max-h-full max-w-full object-contain"
-          />
-        </div>
-      )}
+      {open && <ReceiptLightbox url={url} onClose={() => setOpen(false)} />}
     </>
   );
 }

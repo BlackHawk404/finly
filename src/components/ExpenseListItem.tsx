@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Expense } from "@/lib/db";
 import { getCategory } from "@/lib/categories";
 import { CategoryBadge } from "./CategoryIcon";
+import { ReceiptThumb } from "./ReceiptThumb";
 import { formatMoney } from "@/lib/format";
 import { deleteExpense } from "@/lib/expenses";
 import { Trash2, Mic, Pencil } from "lucide-react";
@@ -26,7 +27,10 @@ export function ExpenseListItem({ expense }: { expense: Expense }) {
 
   return (
     <Card className="flex items-center gap-3 p-3">
-      <CategoryBadge icon={cat.icon} color={cat.color} />
+      <ReceiptThumb
+        expenseId={expense.id}
+        fallback={<CategoryBadge icon={cat.icon} color={cat.color} />}
+      />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <p className="truncate text-sm font-medium">

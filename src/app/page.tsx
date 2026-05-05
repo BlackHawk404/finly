@@ -8,6 +8,7 @@ import { formatMoney, currentMonthKey, monthKey, formatDate, todayISO } from "@/
 import { getCategory } from "@/lib/categories";
 import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/CategoryIcon";
+import { ReceiptThumb } from "@/components/ReceiptThumb";
 import { Mic, Pencil, ArrowUpCircle, Wallet, Settings, BookOpen, ChevronRight } from "lucide-react";
 import { totalsForCurrency } from "@/lib/khata";
 
@@ -227,7 +228,10 @@ export default function HomePage() {
               const isIncome = e.type === "income";
               return (
                 <Card key={e.id} className="flex items-center gap-3 p-3">
-                  <CategoryBadge icon={cat.icon} color={cat.color} />
+                  <ReceiptThumb
+                    expenseId={e.id}
+                    fallback={<CategoryBadge icon={cat.icon} color={cat.color} />}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
                       {e.description || cat.name}
