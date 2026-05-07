@@ -214,6 +214,17 @@ export function InvestmentForm({ initial, editId, onSaved }: InvestmentFormProps
               ))}
             </datalist>
           )}
+          {assetType === "stock" && (
+            <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
+              For PSX you can enter the bare ticker (e.g. <code>HBL</code>) — we&apos;ll add <code>.KA</code> automatically.
+              For other markets include the suffix (<code>AAPL</code>, <code>RELIANCE.NS</code>).
+            </p>
+          )}
+          {assetType === "crypto" && (
+            <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
+              Use the standard ticker (e.g. <code>BTC</code>, <code>ETH</code>, <code>SOL</code>).
+            </p>
+          )}
         </div>
         <div>
           <Label htmlFor="name" className="mb-1.5 block">

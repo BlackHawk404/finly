@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import {
@@ -8,8 +9,10 @@ import {
   portfolioTotals,
   ASSET_TYPE_LABEL,
 } from "@/lib/investments";
+import { refreshHoldingPrice, isQuote, quoteProviderFor } from "@/lib/quotes";
 import { formatMoney } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import {
   TrendingUp,
   TrendingDown,
@@ -17,6 +20,7 @@ import {
   ChevronRight,
   LineChart,
   ArrowLeft,
+  Zap,
 } from "lucide-react";
 
 export default function InvestmentsPage() {
@@ -41,6 +45,32 @@ export default function InvestmentsPage() {
     Object.entries(totals.byCurrency).sort(
       (a, b) => b[1].invested - a[1].invested
     )[0]?.[0] ?? "USD";
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshSummary, setRefreshSummary] = useState<string | null>(null);
+
+  const liveOpen = open.filter((h) => quoteProviderFor(h.assetType));
+
+  async function refreshAll() {
+    if (liveOpen.length === 0) return;
+    setRefreshing(true);
+    setRefreshSummary(null);
+    let ok = 0;
+    let fail = 0;
+    // Sequential to be polite to upstreams.
+    for (const h of liveOpen) {
+      const r = await refreshHoldingPrice(h.assetType, h.symbol, h.currency);
+      if (isQuote(r)) ok += 1;
+      else fail += 1;
+    }
+    setRefreshing(false);
+    setRefreshSummary(
+      fail === 0
+        ? `Updated ${ok} holding${ok === 1 ? "" : "s"}.`
+        : `Updated ${ok}, ${fail} failed.`
+    );
+    setTimeout(() => setRefreshSummary(null), 5000);
+  }
 
   const pnlPct =
     totals.invested > 0
@@ -126,10 +156,31 @@ export default function InvestmentsPage() {
 
       <Link
         href="/investments/add"
-        className="mb-5 flex w-full items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--primary)] py-3 text-sm font-semibold text-[var(--primary-foreground)] shadow-sm shadow-[var(--primary)]/20 transition active:scale-[0.98]"
+        className="mb-3 flex w-full items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--primary)] py-3 text-sm font-semibold text-[var(--primary-foreground)] shadow-sm shadow-[var(--primary)]/20 transition active:scale-[0.98]"
       >
         <Plus size={18} /> New investment transaction
       </Link>
+
+      {liveOpen.length > 0 && (
+        <div className="mb-5">
+          <Button
+            variant="outline"
+            onClick={refreshAll}
+            disabled={refreshing}
+            className="w-full"
+          >
+            <Zap size={14} className={refreshing ? "animate-pulse" : ""} />
+            {refreshing
+              ? `Refreshing ${liveOpen.length}...`
+              : `Refresh live prices (${liveOpen.length})`}
+          </Button>
+          {refreshSummary && (
+            <p className="mt-2 text-center text-[11px] text-[var(--muted-foreground)]">
+              {refreshSummary}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Holdings */}
       {holdings.length === 0 ? (

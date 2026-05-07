@@ -13,6 +13,7 @@ import {
   holdingKey,
 } from "@/lib/investments";
 import { formatMoney, formatDate, formatRelative } from "@/lib/format";
+import { refreshHoldingPrice, isQuote, quoteProviderFor } from "@/lib/quotes";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -27,6 +28,7 @@ import {
   Trash2,
   TrendingDown,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 
 export default function HoldingDetailPage({
@@ -60,6 +62,9 @@ export default function HoldingDetailPage({
   const [priceDraft, setPriceDraft] = useState(
     price?.pricePerUnit ? String(price.pricePerUnit) : ""
   );
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
+  const [refreshErr, setRefreshErr] = useState<string | null>(null);
 
   if (!lots) {
     return (
@@ -90,6 +95,34 @@ export default function HoldingDetailPage({
     await setHoldingPrice(assetType, symbol, p, holding.currency);
     setEditingPrice(false);
   }
+
+  async function handleRefreshPrice() {
+    setRefreshing(true);
+    setRefreshErr(null);
+    setRefreshMsg(null);
+    try {
+      const result = await refreshHoldingPrice(
+        assetType,
+        symbol,
+        holding.currency
+      );
+      if (isQuote(result)) {
+        setRefreshMsg(
+          `Updated · ${result.source === "yahoo" ? "Yahoo Finance" : "CoinGecko"}`
+        );
+      } else {
+        setRefreshErr(result.error);
+      }
+    } finally {
+      setRefreshing(false);
+      setTimeout(() => {
+        setRefreshMsg(null);
+        setRefreshErr(null);
+      }, 5000);
+    }
+  }
+
+  const liveProvider = quoteProviderFor(assetType);
 
   const isUp = holding.totalPnL >= 0;
   const pnlPct =
@@ -209,25 +242,60 @@ export default function HoldingDetailPage({
           )}
         </div>
         {!editingPrice ? (
-          <div className="flex items-center justify-between">
-            <p className="text-2xl font-bold tabular-nums">
-              {holding.currentPrice !== null
-                ? formatMoney(holding.currentPrice, holding.currency)
-                : "—"}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setPriceDraft(
-                  holding.currentPrice ? String(holding.currentPrice) : ""
-                );
-                setEditingPrice(true);
-              }}
-            >
-              <Pencil size={14} /> {holding.currentPrice !== null ? "Update" : "Set"}
-            </Button>
-          </div>
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-2xl font-bold tabular-nums">
+                {holding.currentPrice !== null
+                  ? formatMoney(holding.currentPrice, holding.currency)
+                  : "—"}
+              </p>
+              <div className="flex items-center gap-2">
+                {liveProvider && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefreshPrice}
+                    disabled={refreshing}
+                    title={
+                      liveProvider === "yahoo"
+                        ? "Yahoo Finance · ~15 min delayed"
+                        : "CoinGecko"
+                    }
+                  >
+                    <Zap
+                      size={14}
+                      className={refreshing ? "animate-pulse" : ""}
+                    />
+                    {refreshing ? "..." : "Live"}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPriceDraft(
+                      holding.currentPrice ? String(holding.currentPrice) : ""
+                    );
+                    setEditingPrice(true);
+                  }}
+                >
+                  <Pencil size={14} />{" "}
+                  {holding.currentPrice !== null ? "Edit" : "Set"}
+                </Button>
+              </div>
+            </div>
+            {(refreshMsg || refreshErr) && (
+              <p
+                className={`mt-2 text-[11px] ${
+                  refreshErr
+                    ? "text-[var(--destructive)]"
+                    : "text-[var(--muted-foreground)]"
+                }`}
+              >
+                {refreshErr ?? refreshMsg}
+              </p>
+            )}
+          </>
         ) : (
           <div className="space-y-2">
             <Label htmlFor="price" className="text-xs">
