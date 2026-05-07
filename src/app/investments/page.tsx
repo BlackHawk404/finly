@@ -225,8 +225,8 @@ export default function InvestmentsPage() {
                 Open positions ({open.length})
               </h2>
               <div className="mb-5 space-y-2">
-                {open.map((h) => (
-                  <HoldingRow key={h.key} holding={h} />
+                {open.map((h, i) => (
+                  <HoldingRow key={h.key} holding={h} index={i + 1} />
                 ))}
               </div>
             </>
@@ -237,8 +237,8 @@ export default function InvestmentsPage() {
                 Closed ({closed.length})
               </h2>
               <div className="space-y-2 opacity-70">
-                {closed.map((h) => (
-                  <HoldingRow key={h.key} holding={h} />
+                {closed.map((h, i) => (
+                  <HoldingRow key={h.key} holding={h} index={i + 1} />
                 ))}
               </div>
             </>
@@ -251,8 +251,10 @@ export default function InvestmentsPage() {
 
 function HoldingRow({
   holding,
+  index,
 }: {
   holding: ReturnType<typeof groupHoldings>[number];
+  index?: number;
 }) {
   const slug = encodeURIComponent(holding.key);
   const open = holding.quantity > 0;
@@ -267,6 +269,11 @@ function HoldingRow({
       href={`/investments/holding/${slug}`}
       className="card-elev flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-3 transition hover:border-[var(--primary)]/40 active:scale-[0.99]"
     >
+      {index !== undefined && (
+        <span className="w-6 shrink-0 text-right text-xs font-semibold tabular-nums text-[var(--muted-foreground)]">
+          {index}.
+        </span>
+      )}
       <div
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-semibold text-white"
         style={{
