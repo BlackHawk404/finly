@@ -13,7 +13,7 @@ import {
   holdingKey,
 } from "@/lib/investments";
 import { formatMoney, formatDate, formatRelative } from "@/lib/format";
-import { refreshHoldingPrice, isQuote, quoteProviderFor } from "@/lib/quotes";
+import { refreshHoldingPrice, isQuote, quoteProviderFor, SOURCE_LABEL } from "@/lib/quotes";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -107,9 +107,7 @@ export default function HoldingDetailPage({
         holding.currency
       );
       if (isQuote(result)) {
-        setRefreshMsg(
-          `Updated · ${result.source === "yahoo" ? "Yahoo Finance" : "CoinGecko"}`
-        );
+        setRefreshMsg(`Updated · ${SOURCE_LABEL[result.source]}`);
       } else {
         setRefreshErr(result.error);
       }
@@ -257,8 +255,8 @@ export default function HoldingDetailPage({
                     onClick={handleRefreshPrice}
                     disabled={refreshing}
                     title={
-                      liveProvider === "yahoo"
-                        ? "Yahoo Finance · ~15 min delayed"
+                      assetType === "stock"
+                        ? "PSX live data (Yahoo fallback for non-PSX)"
                         : "CoinGecko"
                     }
                   >

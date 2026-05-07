@@ -12,8 +12,14 @@ export interface Quote {
   changePct: number;
   currency: string;
   asOf: string;
-  source: "yahoo" | "coingecko";
+  source: "psx" | "yahoo" | "coingecko";
 }
+
+export const SOURCE_LABEL: Record<Quote["source"], string> = {
+  psx: "PSX",
+  yahoo: "Yahoo Finance",
+  coingecko: "CoinGecko",
+};
 
 export interface QuoteError {
   error: string;

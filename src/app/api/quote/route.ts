@@ -1,9 +1,10 @@
 // Live quote proxy.
-// - type=stock  → Yahoo Finance (free, ~15 min delayed, unofficial)
+// - type=stock  → PSX DPS (dps.psx.com.pk) for PSX symbols (no suffix or .KA)
+//                 Yahoo Finance fallback for non-PSX (often 429s from Vercel)
 // - type=crypto → CoinGecko (free, no key)
 //
-// Server-side fetch sidesteps Yahoo's CORS block. 60s in-memory cache per
-// (type, symbol, vs) protects upstream from spam during page loads.
+// PSX DPS works from cloud servers; Yahoo aggressively rate-limits cloud IPs.
+// 60s in-memory cache per (type, symbol, vs) protects upstream from spam.
 
 import { NextRequest } from "next/server";
 
@@ -61,7 +62,7 @@ interface QuoteResponse {
   changePct: number;
   currency: string;
   asOf: string;
-  source: "yahoo" | "coingecko";
+  source: "psx" | "yahoo" | "coingecko";
 }
 
 export async function GET(req: NextRequest) {
@@ -85,7 +86,12 @@ export async function GET(req: NextRequest) {
 
   try {
     if (type === "stock") {
-      const value = await fetchYahoo(rawSymbol);
+      // Treat bare tickers and .KA suffix as PSX → use PSX DPS directly.
+      const upper = rawSymbol.trim().toUpperCase();
+      const isPsx = !upper.includes(".") || upper.endsWith(".KA");
+      const value = isPsx
+        ? await fetchPsx(upper)
+        : await fetchYahoo(rawSymbol);
       cache.set(cacheKey, { value, expires: Date.now() + CACHE_TTL_MS });
       return Response.json(value);
     }
@@ -102,6 +108,67 @@ export async function GET(req: NextRequest) {
     const msg = err instanceof Error ? err.message : "Quote lookup failed.";
     return Response.json({ error: msg }, { status: 502 });
   }
+}
+
+// ----------------- PSX DPS (Pakistan Stock Exchange) -----------------
+
+interface PsxEodRow {
+  // [unix_ts_seconds, close, volume, open]
+  0: number;
+  1: number;
+  2: number;
+  3: number;
+  length: 4;
+}
+
+async function fetchPsx(rawSymbol: string): Promise<QuoteResponse> {
+  // Accept "HBL" or "HBL.KA" — strip the suffix for the DPS endpoint.
+  const symbol = rawSymbol.toUpperCase().replace(/\.KA$/, "");
+  const url = `https://dps.psx.com.pk/timeseries/eod/${encodeURIComponent(
+    symbol
+  )}`;
+
+  const r = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  if (!r.ok) {
+    throw new Error(`PSX returned ${r.status}.`);
+  }
+  const j = (await r.json()) as {
+    status: number;
+    message: string;
+    data?: PsxEodRow[];
+  };
+  if (j.status !== 1 || !j.data || j.data.length === 0) {
+    throw new Error(`No PSX data for ${symbol}.`);
+  }
+
+  // data is sorted newest first; row 0 = today/latest, row 1 = previous close
+  const today = j.data[0];
+  const prev = j.data[1];
+
+  const price = Number(today[1]);
+  const previousClose = prev ? Number(prev[1]) : null;
+  const change = previousClose !== null ? price - previousClose : 0;
+  const changePct = previousClose ? (change / previousClose) * 100 : 0;
+  const asOf = new Date(Number(today[0]) * 1000).toISOString();
+
+  return {
+    symbol: symbol,
+    resolvedSymbol: symbol,
+    price,
+    previousClose,
+    change,
+    changePct,
+    currency: "PKR",
+    asOf,
+    source: "psx",
+  };
 }
 
 // ----------------- Yahoo Finance (stocks) -----------------
