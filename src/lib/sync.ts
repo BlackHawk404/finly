@@ -1,6 +1,6 @@
 "use client";
 
-import { db, Expense, Budget, KhataEntry } from "./db";
+import { db, Expense, Budget, KhataEntry, Investment, HoldingPrice } from "./db";
 import { getSupabase } from "./supabase";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -70,6 +70,8 @@ async function pushAll(userId: string) {
   await pushBudgets(userId);
   await pushKhata(userId);
   await pushSettings(userId);
+  await pushInvestments(userId);
+  await pushHoldingPrices(userId);
 }
 
 async function pushExpenses(userId: string) {
@@ -142,6 +144,8 @@ async function pullAll(userId: string) {
   await pullBudgets(userId);
   await pullKhata(userId);
   await pullSettings(userId);
+  await pullInvestments(userId);
+  await pullHoldingPrices(userId);
 }
 
 async function pullExpenses(userId: string) {
@@ -241,6 +245,76 @@ async function pullSettings(userId: string) {
   ]);
 }
 
+// ---------------- investments ----------------
+
+async function pushInvestments(userId: string) {
+  const supabase = getSupabase()!;
+  const dirty = await db.investments.where("dirty").equals(1).toArray();
+  if (dirty.length === 0) return;
+  const rows = dirty.map((i) => investmentToCloud(i, userId));
+  const { error } = await supabase.from("investments").upsert(rows);
+  if (error) throw error;
+  await db.investments.bulkUpdate(
+    dirty.map((i) => ({ key: i.id, changes: { dirty: undefined } }))
+  );
+}
+
+async function pullInvestments(userId: string) {
+  const supabase = getSupabase()!;
+  const since = await getLastPulled("investments");
+  let q = supabase.from("investments").select("*").eq("user_id", userId);
+  if (since) q = q.gt("updated_at", since);
+  const { data, error } = await q;
+  if (error) throw error;
+  if (!data) return;
+  for (const r of data) {
+    if (r.deleted_at) {
+      await db.investments.delete(r.id);
+    } else {
+      const local = await db.investments.get(r.id);
+      if (!local || (local.updatedAt ?? "") <= r.updated_at) {
+        await db.investments.put(cloudToInvestment(r));
+      }
+    }
+  }
+  await setLastPulled("investments");
+}
+
+async function pushHoldingPrices(userId: string) {
+  const supabase = getSupabase()!;
+  const dirty = await db.holdingPrices.where("dirty").equals(1).toArray();
+  if (dirty.length === 0) return;
+  const rows = dirty.map((p) => holdingPriceToCloud(p, userId));
+  const { error } = await supabase
+    .from("holding_prices")
+    .upsert(rows, { onConflict: "user_id,key" });
+  if (error) throw error;
+  await db.holdingPrices.bulkUpdate(
+    dirty.map((p) => ({ key: p.key, changes: { dirty: undefined } }))
+  );
+}
+
+async function pullHoldingPrices(userId: string) {
+  const supabase = getSupabase()!;
+  const since = await getLastPulled("holding_prices");
+  let q = supabase.from("holding_prices").select("*").eq("user_id", userId);
+  if (since) q = q.gt("updated_at", since);
+  const { data, error } = await q;
+  if (error) throw error;
+  if (!data) return;
+  for (const r of data) {
+    if (r.deleted_at) {
+      await db.holdingPrices.delete(r.key);
+    } else {
+      const local = await db.holdingPrices.get(r.key);
+      if (!local || (local.updatedAt ?? "") <= r.updated_at) {
+        await db.holdingPrices.put(cloudToHoldingPrice(r));
+      }
+    }
+  }
+  await setLastPulled("holding_prices");
+}
+
 async function purgeTombstones() {
   const expensesDeleted = await db.expenses
     .filter((e) => Boolean(e.deletedAt) && !e.dirty)
@@ -259,6 +333,16 @@ async function purgeTombstones() {
     .filter((k) => Boolean(k.deletedAt) && !k.dirty)
     .toArray();
   await db.khata.bulkDelete(khataDeleted.map((k) => k.id));
+
+  const investmentsDeleted = await db.investments
+    .filter((i) => Boolean(i.deletedAt) && !i.dirty)
+    .toArray();
+  await db.investments.bulkDelete(investmentsDeleted.map((i) => i.id));
+
+  const pricesDeleted = await db.holdingPrices
+    .filter((p) => Boolean(p.deletedAt) && !p.dirty)
+    .toArray();
+  await db.holdingPrices.bulkDelete(pricesDeleted.map((p) => p.key));
 }
 
 // ---------------- helpers: row mapping ----------------
@@ -390,6 +474,96 @@ function cloudToKhata(r: CloudKhata): KhataEntry {
     status: r.status,
     settledAt: r.settled_at ?? undefined,
     createdAt: r.created_at,
+    updatedAt: r.updated_at,
+    deletedAt: r.deleted_at ?? null,
+  };
+}
+
+interface CloudInvestment {
+  id: string;
+  user_id: string;
+  asset_type: "stock" | "crypto" | "mutual_fund" | "gold" | "other";
+  symbol: string;
+  name: string;
+  side: "buy" | "sell";
+  quantity: number;
+  price_per_unit: number;
+  fees: number;
+  currency: string;
+  date: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+function investmentToCloud(i: Investment, userId: string): CloudInvestment {
+  return {
+    id: i.id,
+    user_id: userId,
+    asset_type: i.assetType,
+    symbol: i.symbol,
+    name: i.name,
+    side: i.side,
+    quantity: i.quantity,
+    price_per_unit: i.pricePerUnit,
+    fees: i.fees,
+    currency: i.currency,
+    date: i.date,
+    notes: i.notes,
+    created_at: i.createdAt,
+    updated_at: i.updatedAt,
+    deleted_at: i.deletedAt ?? null,
+  };
+}
+
+function cloudToInvestment(r: CloudInvestment): Investment {
+  return {
+    id: r.id,
+    assetType: r.asset_type,
+    symbol: r.symbol,
+    name: r.name,
+    side: r.side,
+    quantity: Number(r.quantity),
+    pricePerUnit: Number(r.price_per_unit),
+    fees: Number(r.fees),
+    currency: r.currency,
+    date: r.date,
+    notes: r.notes,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+    deletedAt: r.deleted_at ?? null,
+  };
+}
+
+interface CloudHoldingPrice {
+  user_id: string;
+  key: string;
+  price_per_unit: number;
+  currency: string;
+  as_of: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+function holdingPriceToCloud(p: HoldingPrice, userId: string): CloudHoldingPrice {
+  return {
+    user_id: userId,
+    key: p.key,
+    price_per_unit: p.pricePerUnit,
+    currency: p.currency,
+    as_of: p.asOf,
+    updated_at: p.updatedAt,
+    deleted_at: p.deletedAt ?? null,
+  };
+}
+
+function cloudToHoldingPrice(r: CloudHoldingPrice): HoldingPrice {
+  return {
+    key: r.key,
+    pricePerUnit: Number(r.price_per_unit),
+    currency: r.currency,
+    asOf: r.as_of,
     updatedAt: r.updated_at,
     deletedAt: r.deleted_at ?? null,
   };

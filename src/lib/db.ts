@@ -68,6 +68,35 @@ export interface Receipt {
   createdAt: string;
 }
 
+export type AssetType = "stock" | "crypto" | "mutual_fund" | "gold" | "other";
+export type InvestmentSide = "buy" | "sell";
+
+// One row per buy or sell transaction (a "lot"). Holdings are computed by
+// grouping lots on (assetType, symbol).
+export interface Investment extends SyncMeta {
+  id: string;
+  assetType: AssetType;
+  symbol: string;       // ticker / identifier (uppercase, trimmed)
+  name: string;         // display name (e.g. "Apple Inc.")
+  side: InvestmentSide;
+  quantity: number;     // shares/units (supports fractional)
+  pricePerUnit: number;
+  fees: number;         // commission + taxes for this lot
+  currency: string;
+  date: string;         // ISO date (YYYY-MM-DD)
+  notes: string;
+  createdAt: string;
+}
+
+// Per-symbol current market price, manually entered. Cloud-synced.
+// Key format: `${assetType}:${symbol}`.
+export interface HoldingPrice extends SyncMeta {
+  key: string;
+  pricePerUnit: number;
+  currency: string;
+  asOf: string;       // ISO datetime of when the user updated it
+}
+
 export class FinanceDB extends Dexie {
   expenses!: Table<Expense, string>;
   budgets!: Table<Budget, string>;
@@ -75,6 +104,8 @@ export class FinanceDB extends Dexie {
   khata!: Table<KhataEntry, string>;
   syncState!: Table<SyncState, string>;
   receipts!: Table<Receipt, string>;
+  investments!: Table<Investment, string>;
+  holdingPrices!: Table<HoldingPrice, string>;
 
   constructor() {
     super("finance-app");
@@ -135,6 +166,19 @@ export class FinanceDB extends Dexie {
       khata: "id, type, personName, status, date, createdAt, updatedAt, dirty",
       syncState: "key",
       receipts: "expenseId",
+    });
+    // v6: investments (lots) + per-symbol current price.
+    this.version(6).stores({
+      expenses:
+        "id, type, date, categoryId, paymentMethod, source, createdAt, updatedAt, dirty",
+      budgets: "id, updatedAt, dirty",
+      settings: "key",
+      khata: "id, type, personName, status, date, createdAt, updatedAt, dirty",
+      syncState: "key",
+      receipts: "expenseId",
+      investments:
+        "id, assetType, symbol, side, date, createdAt, updatedAt, dirty",
+      holdingPrices: "key, updatedAt, dirty",
     });
   }
 }

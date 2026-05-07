@@ -9,8 +9,9 @@ import { getCategory } from "@/lib/categories";
 import { Card } from "@/components/ui/Card";
 import { CategoryBadge } from "@/components/CategoryIcon";
 import { ReceiptThumb } from "@/components/ReceiptThumb";
-import { Mic, Pencil, ArrowUpCircle, Wallet, Settings, BookOpen, ChevronRight } from "lucide-react";
+import { Mic, Pencil, ArrowUpCircle, Wallet, Settings, BookOpen, ChevronRight, LineChart } from "lucide-react";
 import { totalsForCurrency } from "@/lib/khata";
+import { groupHoldings, portfolioTotals } from "@/lib/investments";
 
 function timeOfDayGreeting() {
   const h = new Date().getHours();
@@ -63,6 +64,25 @@ export default function HomePage() {
     ? totalsForCurrency(khataEntries, currency)
     : { theyOweYou: 0, youOwe: 0, net: 0 };
   const hasKhata = khataTotals.theyOweYou > 0 || khataTotals.youOwe > 0;
+
+  const investments = useLiveQuery(
+    async () => (await db.investments.toArray()).filter((i) => !i.deletedAt),
+    [],
+    []
+  );
+  const holdingPrices = useLiveQuery(
+    async () => (await db.holdingPrices.toArray()).filter((p) => !p.deletedAt),
+    [],
+    []
+  );
+  const holdings =
+    investments && holdingPrices ? groupHoldings(investments, holdingPrices) : [];
+  const investmentTotals = portfolioTotals(holdings);
+  const hasInvestments = holdings.length > 0;
+  const investDominantCurrency =
+    Object.entries(investmentTotals.byCurrency).sort(
+      (a, b) => b[1].invested - a[1].invested
+    )[0]?.[0] ?? currency;
 
   return (
     <div className="animate-fade-in px-4 pt-6">
@@ -194,6 +214,27 @@ export default function HomePage() {
             Log salary, freelance, or any inflow
           </p>
         </div>
+      </Link>
+
+      {/* Investments snapshot */}
+      <Link
+        href="/investments"
+        className="card-elev mb-3 flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-3 transition hover:border-[var(--primary)]/40 active:scale-[0.99]"
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
+          <LineChart size={18} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">Investments</p>
+          <p className="truncate text-xs text-[var(--muted-foreground)]">
+            {hasInvestments
+              ? `Value ${formatMoney(investmentTotals.currentValue || investmentTotals.invested, investDominantCurrency)} · ${
+                  investmentTotals.totalPnL >= 0 ? "+" : "-"
+                }${formatMoney(Math.abs(investmentTotals.totalPnL), investDominantCurrency)}`
+              : "Track your stocks, crypto and more"}
+          </p>
+        </div>
+        <ChevronRight size={18} className="shrink-0 text-[var(--muted-foreground)]" />
       </Link>
 
       {/* Khata snapshot */}
