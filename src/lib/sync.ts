@@ -121,6 +121,12 @@ async function pushSettings(userId: string) {
     default_payment_method: map.defaultPaymentMethod ?? "cash",
     language: map.language ?? "en-US",
     user_name: map.userName ?? "",
+    profession: map.profession ?? "",
+    employer: map.employer ?? "",
+    monthly_income: map.monthlyIncome ? Number(map.monthlyIncome) || 0 : 0,
+    monthly_income_currency: map.monthlyIncomeCurrency ?? "",
+    financial_goal: map.financialGoal ?? "",
+    bio: map.bio ?? "",
     updated_at: new Date().toISOString(),
   };
   const { error } = await supabase
@@ -215,10 +221,22 @@ async function pullSettings(userId: string) {
   const localTs = localUpdatedRow?.value ?? "";
   if (localTs && localTs > data.updated_at) return;
   await db.settings.bulkPut([
-    { key: "currency", value: data.currency },
-    { key: "defaultPaymentMethod", value: data.default_payment_method },
-    { key: "language", value: data.language },
-    { key: "userName", value: data.user_name },
+    { key: "currency", value: data.currency ?? "USD" },
+    { key: "defaultPaymentMethod", value: data.default_payment_method ?? "cash" },
+    { key: "language", value: data.language ?? "en-US" },
+    { key: "userName", value: data.user_name ?? "" },
+    { key: "profession", value: data.profession ?? "" },
+    { key: "employer", value: data.employer ?? "" },
+    {
+      key: "monthlyIncome",
+      value:
+        data.monthly_income !== null && data.monthly_income !== undefined
+          ? String(data.monthly_income)
+          : "",
+    },
+    { key: "monthlyIncomeCurrency", value: data.monthly_income_currency ?? "" },
+    { key: "financialGoal", value: data.financial_goal ?? "" },
+    { key: "bio", value: data.bio ?? "" },
     { key: "__updatedAt", value: data.updated_at },
   ]);
 }

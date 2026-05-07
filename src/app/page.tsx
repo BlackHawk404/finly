@@ -66,24 +66,39 @@ export default function HomePage() {
 
   return (
     <div className="animate-fade-in px-4 pt-6">
-      <header className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-[var(--muted-foreground)]">
-            {new Date().toLocaleDateString(undefined, {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {timeOfDayGreeting()}
-            {userName && userName.trim() ? `, ${userName.trim()}` : ""} 👋
-          </h1>
-        </div>
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <Link
+          href="/profile"
+          aria-label="Profile"
+          className="group flex min-w-0 flex-1 items-center gap-3 rounded-[var(--radius)] -m-1 p-1 transition active:scale-[0.99]"
+        >
+          <div
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-bold text-white shadow-md transition group-hover:scale-105"
+            style={{
+              background:
+                "linear-gradient(135deg, var(--brand-deep), var(--primary))",
+            }}
+          >
+            {(userName || "").trim().charAt(0).toUpperCase() || "?"}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-[var(--muted-foreground)]">
+              {new Date().toLocaleDateString(undefined, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+            <h1 className="truncate text-xl font-bold tracking-tight">
+              {timeOfDayGreeting()}
+              {userName && userName.trim() ? `, ${userName.trim()}` : ""} 👋
+            </h1>
+          </div>
+        </Link>
         <Link
           href="/settings"
           aria-label="Settings"
-          className="mt-1 flex h-10 w-10 items-center justify-center rounded-full text-[var(--muted-foreground)] transition hover:bg-[var(--accent)] hover:text-[var(--foreground)] active:scale-90"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--muted-foreground)] transition hover:bg-[var(--accent)] hover:text-[var(--foreground)] active:scale-90"
         >
           <Settings size={20} />
         </Link>

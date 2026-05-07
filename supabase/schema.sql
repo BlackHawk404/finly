@@ -54,8 +54,22 @@ create table if not exists public.user_settings (
   default_payment_method text not null default 'cash',
   language text not null default 'en-US',
   user_name text not null default '',
+  profession text not null default '',
+  employer text not null default '',
+  monthly_income numeric not null default 0,
+  monthly_income_currency text not null default '',
+  financial_goal text not null default '',
+  bio text not null default '',
   updated_at timestamptz not null default now()
 );
+
+-- Idempotent migration for projects created before profile fields existed.
+alter table public.user_settings add column if not exists profession text not null default '';
+alter table public.user_settings add column if not exists employer text not null default '';
+alter table public.user_settings add column if not exists monthly_income numeric not null default 0;
+alter table public.user_settings add column if not exists monthly_income_currency text not null default '';
+alter table public.user_settings add column if not exists financial_goal text not null default '';
+alter table public.user_settings add column if not exists bio text not null default '';
 
 -- ---------- Row Level Security ----------
 

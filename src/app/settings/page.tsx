@@ -141,7 +141,7 @@ export default function SettingsPage() {
         Profile
       </h2>
 
-      <Card className="mb-6 p-4">
+      <Card className="mb-3 p-4">
         <Label className="mb-2 block">Your Name</Label>
         <div className="flex gap-2">
           <Input
@@ -161,6 +161,22 @@ export default function SettingsPage() {
           Used to personalize the greeting on the home screen.
         </p>
       </Card>
+
+      <Link
+        href="/profile"
+        className="card-elev mb-6 flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-3 transition hover:border-[var(--primary)]/40 active:scale-[0.99]"
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
+          <UserPlus size={16} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">Personal portfolio</p>
+          <p className="truncate text-xs text-[var(--muted-foreground)]">
+            What you do, what you earn, your goals
+          </p>
+        </div>
+        <span className="text-xs text-[var(--muted-foreground)]">Open →</span>
+      </Link>
 
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
         Preferences
