@@ -46,6 +46,20 @@ export default function InvestmentsPage() {
       (a, b) => b[1].invested - a[1].invested
     )[0]?.[0] ?? "USD";
 
+  // Count distinct open holdings by asset type so the user can see
+  // "3 stocks · 2 crypto" at a glance.
+  const openCountsByType = open.reduce<Record<string, number>>((acc, h) => {
+    acc[h.assetType] = (acc[h.assetType] ?? 0) + 1;
+    return acc;
+  }, {});
+  const openCountSummary = Object.entries(openCountsByType)
+    .map(([type, n]) => {
+      const label =
+        ASSET_TYPE_LABEL[type as keyof typeof ASSET_TYPE_LABEL] ?? type;
+      return `${n} ${label.toLowerCase()}${n === 1 ? "" : "s"}`;
+    })
+    .join(" · ");
+
   const [refreshing, setRefreshing] = useState(false);
   const [refreshSummary, setRefreshSummary] = useState<string | null>(null);
 
@@ -106,12 +120,22 @@ export default function InvestmentsPage() {
               : "linear-gradient(135deg, #7f1d1d, #b91c1c)",
           }}
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/85">
-            Current value
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/85">
+              Current value
+            </p>
+            {open.length > 0 && (
+              <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-white/95 backdrop-blur">
+                {open.length} {open.length === 1 ? "holding" : "holdings"}
+              </span>
+            )}
+          </div>
           <p className="mt-2 text-4xl font-bold tabular-nums">
             {formatMoney(totals.currentValue, dominantCurrency)}
           </p>
+          {openCountSummary && (
+            <p className="mt-1 text-[11px] text-white/70">{openCountSummary}</p>
+          )}
           <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold">
             {isUp ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             <span className="tabular-nums">
@@ -198,7 +222,7 @@ export default function InvestmentsPage() {
           {open.length > 0 && (
             <>
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-                Open positions
+                Open positions ({open.length})
               </h2>
               <div className="mb-5 space-y-2">
                 {open.map((h) => (
@@ -210,7 +234,7 @@ export default function InvestmentsPage() {
           {closed.length > 0 && (
             <>
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-                Closed
+                Closed ({closed.length})
               </h2>
               <div className="space-y-2 opacity-70">
                 {closed.map((h) => (

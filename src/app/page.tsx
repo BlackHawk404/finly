@@ -225,7 +225,14 @@ export default function HomePage() {
           <LineChart size={18} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Investments</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-semibold">Investments</p>
+            {hasInvestments && (
+              <span className="rounded-full bg-[var(--primary-soft)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--primary)]">
+                {holdings.filter((h) => h.quantity > 0).length}
+              </span>
+            )}
+          </div>
           <p className="truncate text-xs text-[var(--muted-foreground)]">
             {hasInvestments
               ? `Value ${formatMoney(investmentTotals.currentValue || investmentTotals.invested, investDominantCurrency)} · ${
